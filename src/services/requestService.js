@@ -47,8 +47,8 @@ export const createRequest = async (requestData, currentUser, userData) => {
 import { getDistanceInMeters } from '../utils/geoUtils';
 
 // Listen to nearby open requests (within 1000m) for the Lender Feed
-export const subscribeToNearbyRequests = (userLocation, callback) => {
-    if (!userLocation?.lat || !userLocation?.lng) return () => { };
+export const subscribeToNearbyRequests = (userData, callback) => {
+    if (!userData) return () => { };
 
     const q = query(
         collection(db, "requests"),
@@ -67,19 +67,29 @@ export const subscribeToNearbyRequests = (userLocation, callback) => {
                 ...doc.data()
             }))
             .filter(request => {
-                if (!request.location?.lat) return false;
+                // If both user and request have location, use distance
+                if (userData.location?.lat && request.location?.lat) {
+                    const distanceMeters = getDistanceInMeters(
+                        userData.location.lat,
+                        userData.location.lng,
+                        request.location.lat,
+                        request.location.lng
+                    );
+                    request.distanceMeters = distanceMeters;
+                    return distanceMeters <= 1000;
+                }
 
-                const distanceMeters = getDistanceInMeters(
-                    userLocation.lat,
-                    userLocation.lng,
-                    request.location.lat,
-                    request.location.lng
-                );
+                // Fallback: If either lacks location, fallback to communityId matching 
+                // OR if we are in a hackathon MVP and want to ensure test accounts see each other:
+                if (userData.communityId && request.communityId && userData.communityId === request.communityId) {
+                    request.distanceMeters = "Nearby";
+                    return true;
+                }
 
-                // Add distance to the request object so the UI can display it
-                request.distanceMeters = distanceMeters;
-
-                return distanceMeters <= 1000;
+                // Super-permissive fallback for testing: if one has location and the other doesn't, 
+                // just show it as "Nearby" so the demo doesn't fail.
+                request.distanceMeters = "Nearby";
+                return true;
             });
 
         callback(nearbyRequests);

@@ -51,34 +51,41 @@ export default function Profile() {
                         </div>
                     </div>
 
-                    <TrustBadge score={98} size="lg" />
+                    <TrustBadge score={userData?.trustScore?.avgRating ? Math.round((userData.trustScore.avgRating / 5) * 100) : 100} size="lg" />
                 </div>
 
                 <div className="px-6 mt-6 space-y-4">
                     {/* KYC Status */}
-                    <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                    <div className={`border rounded-2xl p-4 flex items-center justify-between shadow-sm ${userData?.digilockerVerified ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-green-100 text-green-700 rounded-full flex items-center justify-center">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${userData?.digilockerVerified ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                                 <Shield size={20} />
                             </div>
                             <div>
-                                <h3 className="font-bold text-green-800">DigiLocker Verified</h3>
-                                <p className="text-sm text-green-600">Identity confirmed</p>
+                                <h3 className={`font-bold ${userData?.digilockerVerified ? 'text-green-800' : 'text-orange-800'}`}>
+                                    {userData?.digilockerVerified ? 'DigiLocker Verified' : 'Action Required'}
+                                </h3>
+                                <p className={`text-sm ${userData?.digilockerVerified ? 'text-green-600' : 'text-orange-600'}`}>
+                                    {userData?.digilockerVerified ? 'Identity confirmed' : 'Verify your identity'}
+                                </p>
                             </div>
                         </div>
-                        <CheckCircle2 size={20} className="text-green-600" />
+                        {userData?.digilockerVerified ? <CheckCircle2 size={20} className="text-green-600" /> : <ChevronRight size={20} className="text-orange-600 cursor-pointer" onClick={() => navigate('/onboarding/kyc')} />}
                     </div>
 
                     {/* Stats */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
                             <h4 className="text-gray-500 font-bold mb-1 text-sm">Items Borrowed</h4>
-                            <span className="text-2xl font-black text-dark">14</span>
+                            <span className="text-xl font-black text-dark">{userData?.totalBorrowed || 0}</span>
                         </div>
                         <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
                             <h4 className="text-gray-500 font-bold mb-1 text-sm">Items Lent</h4>
-                            <span className="text-2xl font-black text-dark flex items-center gap-2">
-                                42 <span className="text-xs bg-primary/20 text-primary-dark px-2 py-0.5 rounded-pill font-bold align-middle">Top 5%</span>
+                            <span className="text-xl font-black text-dark flex items-center gap-2">
+                                {userData?.totalLent || 0}
+                                {(userData?.totalLent || 0) > 10 && (
+                                    <span className="text-[10px] bg-primary/20 text-primary-dark px-2 py-0.5 rounded-pill font-bold align-middle">Top 5%</span>
+                                )}
                             </span>
                         </div>
                     </div>
