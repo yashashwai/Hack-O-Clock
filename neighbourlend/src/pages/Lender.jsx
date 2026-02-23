@@ -15,10 +15,10 @@ export default function Lender() {
     const [isAccepting, setIsAccepting] = useState(false);
 
     useEffect(() => {
-        if (!currentUser || !userData?.location) return;
+        if (!currentUser || !userData) return;
 
         // 1. Listen to all open requests within 1000m of the lender
-        const unsubIncoming = subscribeToNearbyRequests(userData.location, (reqs) => {
+        const unsubIncoming = subscribeToNearbyRequests(userData, (reqs) => {
             // Filter out the lender's OWN requests so they can't lend to themselves
             const othersReqs = reqs.filter(r => r.borrowerId !== currentUser.uid);
 
@@ -138,7 +138,7 @@ export default function Lender() {
                                         {req.category}
                                     </span>
                                     <span className="text-xs text-gray-500 font-bold flex items-center gap-1">
-                                        <MapPin size={12} /> {req.distanceMeters}m away
+                                        <MapPin size={12} /> {req.distanceMeters === 'Nearby' ? 'Nearby' : `${req.distanceMeters}m away`}
                                     </span>
                                 </div>
 
