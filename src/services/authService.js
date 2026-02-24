@@ -28,7 +28,12 @@ export const loginWithGoogle = async () => {
                     avgRating: 5.0,
                     totalTransactions: 0,
                     returnRate: 100,
-                    avgResponseTime: 100
+                    avgResponseTime: 100,
+                    S: 0, // Successful returns
+                    L: 0, // Late returns
+                    D: 0, // Damage incidents
+                    C: 0, // Cancellations
+                    T: 0  // Total transactions
                 },
                 trustTier: "New User",
                 createdAt: Date.now(),

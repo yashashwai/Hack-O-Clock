@@ -51,7 +51,11 @@ export default function Profile() {
                         </div>
                     </div>
 
-                    <TrustBadge score={userData?.trustScore?.avgRating ? Math.round((userData.trustScore.avgRating / 5) * 100) : 100} size="lg" />
+                    <TrustBadge
+                        tier={userData?.trustTier || "New User"}
+                        score={userData?.trustScore?.overall || 50}
+                        size="lg"
+                    />
                 </div>
 
                 <div className="px-6 mt-6 space-y-4">
@@ -74,19 +78,27 @@ export default function Profile() {
                     </div>
 
                     {/* Stats */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                            <h4 className="text-gray-500 font-bold mb-1 text-sm">Items Borrowed</h4>
-                            <span className="text-xl font-black text-dark">{userData?.totalBorrowed || 0}</span>
-                        </div>
-                        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col">
-                            <h4 className="text-gray-500 font-bold mb-1 text-sm">Items Lent</h4>
-                            <span className="text-xl font-black text-dark flex items-center gap-2">
-                                {userData?.totalLent || 0}
-                                {(userData?.totalLent || 0) > 10 && (
-                                    <span className="text-[10px] bg-primary/20 text-primary-dark px-2 py-0.5 rounded-pill font-bold align-middle">Top 5%</span>
-                                )}
-                            </span>
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                        <h4 className="text-gray-500 font-bold mb-3 text-sm flex items-center gap-2">
+                            <Award size={16} /> Complete Trust Profile
+                        </h4>
+                        <div className="grid grid-cols-4 gap-2 text-center">
+                            <div className="bg-green-50 rounded-xl p-2">
+                                <span className="text-sm font-black text-green-700 block">{userData?.trustScore?.S || 0}</span>
+                                <span className="text-[10px] text-green-600 font-bold uppercase tracking-wider">Success</span>
+                            </div>
+                            <div className="bg-yellow-50 rounded-xl p-2">
+                                <span className="text-sm font-black text-yellow-700 block">{userData?.trustScore?.L || 0}</span>
+                                <span className="text-[10px] text-yellow-600 font-bold uppercase tracking-wider">Late</span>
+                            </div>
+                            <div className="bg-orange-50 rounded-xl p-2">
+                                <span className="text-sm font-black text-orange-700 block">{userData?.trustScore?.D || 0}</span>
+                                <span className="text-[10px] text-orange-600 font-bold uppercase tracking-wider">Damage</span>
+                            </div>
+                            <div className="bg-red-50 rounded-xl p-2">
+                                <span className="text-sm font-black text-red-700 block">{userData?.trustScore?.C || 0}</span>
+                                <span className="text-[10px] text-red-600 font-bold uppercase tracking-wider">Cancel</span>
+                            </div>
                         </div>
                     </div>
 

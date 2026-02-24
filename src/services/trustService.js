@@ -14,51 +14,46 @@ export const recalculateTrustScore = async (userId, rating, wentWell, responseTi
             avgRating: 5.0,
             totalTransactions: 0,
             returnRate: 100,
-            avgResponseTime: 100
+            avgResponseTime: 100,
+            S: 0, L: 0, D: 0, C: 0, T: 0
         };
 
-        // Recalculate metrics
-        const newTotal = currentScore.totalTransactions + 1;
+        // We receive outcomeType as 'success', 'late', 'damage', or 'cancellation'
+        // 'rating' and 'wentWell' arguments are kept for backward compatibility if needed, 
+        // but outcomeType is passed as the second argument now.
+        const actualOutcome = typeof rating === 'string' ? rating : (wentWell ? 'success' : 'damage');
 
-        // Simple moving average for rating
-        const newAvgRating = ((currentScore.avgRating * currentScore.totalTransactions) + rating) / newTotal;
+        let S = currentScore.S || 0;
+        let L = currentScore.L || 0;
+        let D = currentScore.D || 0;
+        let C = currentScore.C || 0;
+        let T = currentScore.T || 0;
 
-        // Return rate: wentWell counts as a successful return (100) vs disputed (0)
-        const returnScore = wentWell ? 100 : 0;
-        const newReturnRate = ((currentScore.returnRate * currentScore.totalTransactions) + returnScore) / newTotal;
+        // Apply new metrics
+        if (actualOutcome === 'success') S++;
+        else if (actualOutcome === 'late') L++;
+        else if (actualOutcome === 'damage') D++;
+        else if (actualOutcome === 'cancellation') C++;
 
-        // Response time (placeholder logic: keeping current average for simplicity, would ideally log actual times)
-        const newResponseTimeScore = currentScore.avgResponseTime;
+        // Any of the above is a transaction attempt
+        T++;
 
-        // Calculate final weighted score (0-100)
-        // avgRating (out of 5 -> scale to 100) × 0.40
-        const weightRating = (newAvgRating / 5) * 100 * 0.40;
-
-        // totalTransactions (cap at 10 for max score impact) × 0.30
-        const weightTxps = Math.min((newTotal / 10) * 100, 100) * 0.30;
-
-        // returnRate × 0.20
-        const weightReturn = newReturnRate * 0.20;
-
-        // avgResponseTime score × 0.10
-        const weightResponse = newResponseTimeScore * 0.10;
-
-        const finalScore = Math.round(weightRating + weightTxps + weightReturn + weightResponse);
+        // Apply formula requested by user: Trust score = ((S + 1) / (T + 2)) * 100
+        const finalScore = Math.round(((S + 1) / (T + 2)) * 100);
 
         // Determine Tier
         let newTier = "New User";
-        if (finalScore > 80) newTier = "Community Star";
-        else if (finalScore > 60) newTier = "Verified";
-        else if (finalScore > 30) newTier = "Trusted";
+        if (finalScore >= 80) newTier = "Community Star";
+        else if (finalScore >= 60) newTier = "Verified";
+        else if (finalScore >= 30) newTier = "Trusted";
 
         // Update Firestore
         await updateDoc(userRef, {
             trustScore: {
-                avgRating: parseFloat(newAvgRating.toFixed(1)),
-                totalTransactions: newTotal,
-                returnRate: parseFloat(newReturnRate.toFixed(1)),
-                avgResponseTime: newResponseTimeScore,
-                overall: finalScore
+                ...currentScore,
+                overall: finalScore,
+                totalTransactions: T, // legacy map
+                S, L, D, C, T
             },
             trustTier: newTier
         });

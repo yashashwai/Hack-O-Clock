@@ -56,12 +56,12 @@ export default function LoadingSplash() {
                 <div className="absolute inset-0 border-[6px] border-black rounded-3xl z-[-1] translate-x-3 translate-y-3 bg-dark"></div>
             </div>
 
-            <div className="text-center mb-16 relative z-10 w-full flex flex-col items-start pr-8">
-                <h1 className="text-[40pt] font-black text-black leading-[1.1] tracking-tight">
+            <div className="text-center mb-16 relative z-10 w-full flex flex-col items-center">
+                <h1 className="text-[40pt] font-black text-black leading-[1.1] tracking-tight text-center">
                     Neighbour<br />Lend
                 </h1>
-                <p className="text-[18pt] font-medium text-black/80 mt-4 text-left leading-tight">
-                    Borrow from your neighbour.<br />Return with trust.
+                <p className="text-[22pt] font-bold text-gray-600 mt-4 text-center leading-tight">
+                    "Apno se udhaar,<br />Bina sharam ke"
                 </p>
             </div>
 

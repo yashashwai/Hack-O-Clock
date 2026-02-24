@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Clock } from 'lucide-react';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { toast } from 'react-hot-toast';
 
@@ -49,6 +49,20 @@ export default function LenderWaiting() {
                     className="w-full max-w-[280px] mt-12 bg-dark text-white font-bold text-lg py-4 rounded-pill shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-transform"
                 >
                     Back to My Loans
+                </button>
+
+                {/* DEMO BYPASS BUTTON */}
+                <button
+                    onClick={async () => {
+                        toast.loading('Simulating Borrower Payment... (Dev Mode)');
+                        await updateDoc(doc(db, "transactions", id), {
+                            status: 'return_pending' // Force skip collateral AND active straight to return
+                        });
+                        navigate(`/lender/post-return/${id}`);
+                    }}
+                    className="w-full max-w-[280px] mt-4 border-2 border-primary text-dark font-bold text-sm py-3 rounded-pill hover:bg-primary/10 transition-colors"
+                >
+                    [DEV MODE] Simulate Return Ready
                 </button>
             </main>
         </div>

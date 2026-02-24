@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_KEY);
 
 // System prompt for the NeighbourLend Chatbot
 const SYSTEM_PROMPT = `
@@ -17,9 +17,42 @@ Rules:
 - Deposits are automatically fully refunded if the item is returned in 'Good Condition'.
 `;
 
+const SUPPORT_PROMPT = `
+You are the NeighbourLend assistant — a helpful, friendly chatbot for a hyperlocal item lending platform inside gated communities. 
+You help users with:
+- How to post a borrow request
+- How to accept and lend an item
+- Understanding the collateral system
+- Checking their trust score
+- Resolving confusion about photo uploads
+- Explaining what the warden/admin can see
+Keep answers short, friendly, and practical. 
+If unsure, say so — don't make up platform rules.
+`;
+
+export const getSupportResponse = async (userMessage, historyArray = []) => {
+    try {
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+
+        const chat = model.startChat({
+            history: [
+                { role: "user", parts: [{ text: "System instructions: " + SUPPORT_PROMPT }] },
+                { role: "model", parts: [{ text: "Understood. I am the NeighbourLend Support Assistant." }] },
+                ...historyArray
+            ]
+        });
+
+        const result = await chat.sendMessage(userMessage);
+        return result.response.text();
+    } catch (error) {
+        console.error("Gemini Support Error:", error);
+        throw error;
+    }
+};
+
 export const getChatbotResponse = async (userMessage, conversationHistory = []) => {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
         // Convert our message format to Gemini's expected format
         const history = conversationHistory.map(msg => ({
@@ -48,7 +81,7 @@ export const getChatbotResponse = async (userMessage, conversationHistory = []) 
 
 export const getPriceSuggestion = async (itemCategory, itemDescription) => {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
         const prompt = `As a pricing expert for a peer-to-peer lending app in India, suggest a fair hourly rental price range in INR (₹) for the following item. 
         Category: ${itemCategory}
         Description: ${itemDescription}
@@ -65,7 +98,7 @@ export const getPriceSuggestion = async (itemCategory, itemDescription) => {
 
 export const getTrustSummary = async (trustScoreObj) => {
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
         const prompt = `Convert this user's platform trust metrics into a 1-2 sentence compelling summary:
         Total Transactions: ${trustScoreObj.totalTransactions || trustScoreObj.transactions?.length || 0}
         Average Rating: ${trustScoreObj.avgRating || 5.0}/5.0

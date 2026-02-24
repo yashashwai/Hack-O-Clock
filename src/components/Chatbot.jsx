@@ -1,18 +1,6 @@
 import { useState } from "react";
 import { Sparkles, MessageCircle, X } from "lucide-react";
-
-const SYSTEM_PROMPT = `
-You are the NeighbourLend assistant — a helpful, friendly chatbot for a hyperlocal item lending platform inside gated communities. 
-You help users with:
-- How to post a borrow request
-- How to accept and lend an item
-- Understanding the collateral system
-- Checking their trust score
-- Resolving confusion about photo uploads
-- Explaining what the warden/admin can see
-Keep answers short, friendly, and practical. 
-If unsure, say so — don't make up platform rules.
-`;
+import { getSupportResponse } from '../services/geminiService';
 
 export default function Chatbot() {
     const [open, setOpen] = useState(false);
@@ -32,36 +20,25 @@ export default function Chatbot() {
         setIsLoading(true);
 
         try {
-            const apiKey = import.meta.env.VITE_GEMINI_KEY;
-            if (!apiKey || apiKey === "your_gemini_key_here") {
-                setTimeout(() => {
-                    setMessages([...history, { role: "model", parts: [{ text: "I'm currently in offline mode because the Gemini API key is missing from the environment variables." }] }]);
-                    setIsLoading(false);
-                }, 1000);
-                return;
-            }
+            // Get all past chat messages, excluding the first static dummy welcome message
+            const apiHistory = messages.slice(1).map(m => ({
+                role: m.role,
+                parts: [{ text: m.parts[0].text }]
+            }));
 
-            const res = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                        contents: history
-                    })
-                }
-            );
+            // Pass the user input and the cleaned history directly to the dedicated service
+            const replyText = await getSupportResponse(input, apiHistory);
 
-            const data = await res.json();
-            if (data.candidates && data.candidates[0].content) {
-                const reply = data.candidates[0].content.parts[0].text;
-                setMessages([...history, { role: "model", parts: [{ text: reply }] }]);
-            } else {
-                throw new Error("Invalid format");
-            }
+            setMessages([...history, { role: "model", parts: [{ text: replyText }] }]);
         } catch (err) {
-            setMessages([...history, { role: "model", parts: [{ text: "Oops, I'm having trouble connecting right now. Please try again later." }] }]);
+            console.error("Chatbot Error:", err);
+            setMessages([...history, {
+                role: "model", parts: [{
+                    text: `Oops, I'm having trouble connecting right now. 
+            
+Error: ${err.message}`
+                }]
+            }]);
         } finally {
             setIsLoading(false);
         }
@@ -85,8 +62,8 @@ export default function Chatbot() {
                         {messages.map((m, i) => (
                             <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                                 <div className={`p-3 rounded-2xl max-w-[85%] text-sm ${m.role === "user"
-                                        ? "bg-primary text-black rounded-tr-none"
-                                        : "bg-white text-dark shadow-sm rounded-tl-none border border-gray-100"
+                                    ? "bg-primary text-black rounded-tr-none"
+                                    : "bg-white text-dark shadow-sm rounded-tl-none border border-gray-100"
                                     }`}>
                                     {m.parts[0].text}
                                 </div>
