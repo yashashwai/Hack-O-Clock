@@ -5,23 +5,28 @@ import { toast } from 'react-hot-toast';
 // When a lender accepts a borrower's open request
 export const acceptRequest = async (requestId, requestData, lenderId, lenderData) => {
     try {
+        console.log("acceptRequest: Starting with", { requestId, requestData, lenderId, lenderData });
+
         // 1. Update the Request to "accepted"
+        console.log("acceptRequest: Updating request doc status...");
         const reqRef = doc(db, "requests", requestId);
         await updateDoc(reqRef, {
             status: "accepted"
         });
+        console.log("acceptRequest: Successfully updated request doc!");
 
         // 2. Calculate collateral based on item value logic, or just a placeholder for now
         // For MVP, we let the lender decide the item value at PreHandover, so collateral is null initially.
 
         // 3. Create a new Transaction record
+        console.log("acceptRequest: Creating transaction record...");
         const newTx = {
             requestId: requestId,
-            borrowerId: requestData.borrowerId,
-            borrowerName: requestData.borrowerName,
+            borrowerId: requestData.borrowerId || "unknown_borrower",
+            borrowerName: requestData.borrowerName || "Unknown",
             lenderId: lenderId,
-            lenderName: lenderData.name || "Anonymous",
-            communityId: requestData.communityId,
+            lenderName: lenderData?.name || "Anonymous",
+            communityId: requestData.communityId || null,
 
             // Photos
             preHandoverPhotoURL: null,
@@ -41,21 +46,27 @@ export const acceptRequest = async (requestId, requestData, lenderId, lenderData
             razorpayRentalPaymentId: null,
 
             // Timestamps
-            createdAt: serverTimestamp(),
+            createdAt: Date.now(),
             collectedAt: null,
             returnedAt: null,
 
             // Snapshot of request details for easy rendering
-            itemCategory: requestData.category,
-            durationHours: requestData.durationHours
+            itemCategory: requestData.category || "General",
+            durationHours: requestData.durationHours || 24
         };
+        console.log("acceptRequest: newTx payload:", newTx);
 
         const txRef = await addDoc(collection(db, "transactions"), newTx);
+        console.log("acceptRequest: Successfully created transaction doc with ID:", txRef.id);
+
+        // Wait extremely slightly to make sure the network propagates
+        await new Promise(r => setTimeout(r, 200));
+
         toast.success("Request accepted! Waiting for borrower's deposit.");
         return txRef.id;
     } catch (error) {
-        console.error("Error accepting request:", error);
-        toast.error("Failed to accept request");
+        console.error("Error accepting request in step:", error);
+        toast.error(`Failed to accept request: ${error.message || error}`);
         throw error;
     }
 };
@@ -65,11 +76,16 @@ export const subscribeToBorrowerTransactions = (userId, callback) => {
     if (!userId) return () => { };
     const q = query(
         collection(db, "transactions"),
-        where("borrowerId", "==", userId),
-        orderBy("createdAt", "desc")
+        where("borrowerId", "==", userId)
     );
     return onSnapshot(q, (snapshot) => {
-        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const txs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        txs.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : a.createdAt;
+            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : b.createdAt;
+            return (timeB || 0) - (timeA || 0);
+        });
+        callback(txs);
     });
 };
 
@@ -78,11 +94,16 @@ export const subscribeToLenderTransactions = (userId, callback) => {
     if (!userId) return () => { };
     const q = query(
         collection(db, "transactions"),
-        where("lenderId", "==", userId),
-        orderBy("createdAt", "desc")
+        where("lenderId", "==", userId)
     );
     return onSnapshot(q, (snapshot) => {
-        callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const txs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        txs.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : a.createdAt;
+            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : b.createdAt;
+            return (timeB || 0) - (timeA || 0);
+        });
+        callback(txs);
     });
 };
 

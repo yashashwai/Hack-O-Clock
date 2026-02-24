@@ -40,8 +40,9 @@ export default function PreHandover() {
         const toastId = toast.loading("Uploading photo and setting collateral...");
 
         try {
-            // 1. Upload photo to Firebase Storage
-            const photoUrl = await uploadTransactionPhoto(fileBlob, id, 'pre_handover');
+            // 1. Skip Firebase Storage upload to bypass billing restrictions for hackathon
+            // We directly save the compressed Base64 string from the FileReader (photoDataUrl)
+            const photoUrl = photoDataUrl;
 
             // 2. Update transaction with photo URL and Item Value
             // Collateral MVP = 25% of item value

@@ -35,7 +35,7 @@ export default function Profile() {
                 </div>
             </header>
 
-            <main className="flex-1 overflow-y-auto pb-8">
+            <main className="flex-1 overflow-y-auto pb-28">
                 {/* User Card */}
                 <div className="bg-white px-6 py-8 shadow-sm">
                     <div className="flex items-center gap-4 mb-6">

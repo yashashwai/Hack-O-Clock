@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { Package, Clock, ShieldCheck, CreditCard, CheckCircle2, Camera, Bot, Sparkles, LogOut } from 'lucide-react';
+import { Package, Clock, ShieldCheck, CreditCard, CheckCircle2, Camera, Bot, Sparkles } from 'lucide-react';
 import { subscribeToMyRequests } from '../services/requestService';
 import { useAuth } from '../contexts/AuthContext';
 import { getTrustSummary } from '../services/geminiService';
-import { logoutUser } from '../services/authService';
 
 export default function Borrower() {
     const navigate = useNavigate();
@@ -43,15 +42,6 @@ export default function Borrower() {
 
         return () => unsubscribe();
     }, [currentUser]);
-
-    const handleLogout = async () => {
-        try {
-            await logoutUser();
-            navigate('/onboarding/splash');
-        } catch (error) {
-            console.error(error);
-        }
-    };
 
     const handleGenerateInsights = async () => {
         if (!userData) return;
@@ -135,13 +125,6 @@ export default function Borrower() {
                         <h1 className="text-28pt font-bold text-dark leading-tight">My Borrows</h1>
                         <p className="text-sm text-gray-500 mt-1">Track and manage your requests</p>
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        className="w-10 h-10 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                        title="Logout"
-                    >
-                        <LogOut size={20} />
-                    </button>
                 </div>
 
                 {/* AI Insights Card */}
@@ -186,7 +169,7 @@ export default function Borrower() {
                 </button>
             </header>
 
-            <main className="flex-1 px-4 py-6 overflow-y-auto space-y-4">
+            <main className="flex-1 px-4 pt-6 pb-28 overflow-y-auto space-y-4">
                 {requests.length === 0 ? (
                     <div className="text-center py-10 opacity-70">
                         <Package size={48} className="mx-auto mb-4 text-gray-400" />

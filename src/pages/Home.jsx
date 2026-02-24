@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import { Bell, Package, HandHeart, MessageCircle, CheckCircle2, Search, LogOut } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { logoutUser } from '../services/authService';
+import { Bell, Package, HandHeart, MessageCircle, CheckCircle2, Search } from 'lucide-react';
 
 const categories = [
     { id: 1, name: 'Laptop', icon: '💻', price: '₹80-150/hr' },
@@ -28,15 +27,6 @@ export default function Home() {
 
     const displayName = userData?.name ? userData.name.split(' ')[0] : 'Neighbor';
 
-    const handleLogout = async () => {
-        try {
-            await logoutUser();
-            navigate('/onboarding/splash');
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
     return (
         <div className="bg-surface min-h-[calc(100vh-72px)] flex flex-col font-sans">
             {/* Header */}
@@ -55,13 +45,6 @@ export default function Home() {
                 </div>
                 <div className="flex items-center gap-2">
                     <button
-                        onClick={handleLogout}
-                        className="w-12 h-12 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                        title="Logout"
-                    >
-                        <LogOut size={20} />
-                    </button>
-                    <button
                         onClick={() => toast('No new notifications', { icon: '🔔' })}
                         className="w-12 h-12 flex items-center justify-center rounded-full bg-surface relative hover:bg-gray-200 transition-colors"
                     >
@@ -71,7 +54,7 @@ export default function Home() {
                 </div>
             </header>
 
-            <main className="flex-1 px-6 pb-8 space-y-8 overflow-y-auto">
+            <main className="flex-1 px-6 pb-28 space-y-8 overflow-y-auto">
                 {/* Search */}
                 <section className="mt-4">
                     <div className="relative">

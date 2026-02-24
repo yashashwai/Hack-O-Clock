@@ -127,7 +127,7 @@ export default function Lender() {
                 </div>
             </header>
 
-            <main className="flex-1 px-4 py-4 overflow-y-auto space-y-8">
+            <main className="flex-1 px-4 pt-4 pb-28 overflow-y-auto space-y-8">
                 {/* Incoming Feed */}
                 <section>
                     <div className="space-y-4">

@@ -19,7 +19,7 @@ export const createRequest = async (requestData, currentUser, userData) => {
             priceMax: requestData.priceMax,
             durationHours: requestData.durationHours,
             status: "open",
-            createdAt: serverTimestamp(),
+            createdAt: Date.now(),
             // These will be filled when a lender accepts
             itemValue: null,
             collateralAmount: null,
@@ -52,16 +52,13 @@ export const subscribeToNearbyRequests = (userData, callback) => {
 
     const q = query(
         collection(db, "requests"),
-        where("status", "==", "open"),
-        // Note: In a production app with millions of users, fetching ALL open requests 
-        // to filter client-side is inefficient. You would use GeoFire or GeoHashes. 
-        // For a hackathon MVP, client-side distance filtering on a small set is fine.
-        orderBy("createdAt", "desc")
+        where("status", "==", "open")
+        // Note: Removed orderBy("createdAt") to prevent Firebase SDK assertion crash (ve:-1)
     );
 
     return onSnapshot(q, (snapshot) => {
         const now = Date.now();
-        const nearbyRequests = snapshot.docs
+        let nearbyRequests = snapshot.docs
             .map(doc => ({
                 id: doc.id,
                 ...doc.data()
@@ -92,6 +89,13 @@ export const subscribeToNearbyRequests = (userData, callback) => {
                 return true;
             });
 
+        // Sort in JS instead of Firestore to prevent cache crash
+        nearbyRequests.sort((a, b) => {
+            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : a.createdAt;
+            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : b.createdAt;
+            return (timeB || 0) - (timeA || 0);
+        });
+
         callback(nearbyRequests);
     }, (error) => {
         console.error("Error fetching nearby requests:", error);
@@ -104,15 +108,18 @@ export const subscribeToMyRequests = (userId, callback) => {
 
     const q = query(
         collection(db, "requests"),
-        where("borrowerId", "==", userId),
-        orderBy("createdAt", "desc")
+        where("borrowerId", "==", userId)
     );
 
     return onSnapshot(q, (snapshot) => {
         const requests = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
-        }));
+        })).sort((a, b) => {
+            const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : a.createdAt;
+            const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : b.createdAt;
+            return (timeB || 0) - (timeA || 0);
+        });
         callback(requests);
     }, (error) => {
         console.error("Error fetching my requests:", error);

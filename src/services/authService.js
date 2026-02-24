@@ -31,7 +31,7 @@ export const loginWithGoogle = async () => {
                     avgResponseTime: 100
                 },
                 trustTier: "New User",
-                createdAt: serverTimestamp(),
+                createdAt: Date.now(),
             });
             console.log("New user created in Firestore!");
             return { user, isNew: true };
